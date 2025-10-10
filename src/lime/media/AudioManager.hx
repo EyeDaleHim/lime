@@ -40,12 +40,10 @@ class AudioManager
 					alc.makeContextCurrent(ctx);
 					alc.processContext(ctx);
 
-					if (Application.current != null && ALC.isExtensionPresent(device, 'ALC_EXT_disconnect'))
+					if (Application.current != null && ALC.isExtensionPresent(device, 'ALC_SOFT_reopen_device'))
 					{
 						if (!Application.current.onUpdate.has(checkDevice))
-						{
 							Application.current.onUpdate.add(checkDevice);
-						}
 					}
 				}
 				#end
@@ -77,12 +75,10 @@ class AudioManager
 				alc.resumeDevice(device);
 				alc.processContext(currentContext);
 
-				if (Application.current != null && ALC.isExtensionPresent(device, 'ALC_EXT_disconnect'))
+				if (Application.current != null && ALC.isExtensionPresent(device, 'ALC_SOFT_reopen_device'))
 				{
 					if (!Application.current.onUpdate.has(checkDevice))
-					{
 						Application.current.onUpdate.add(checkDevice);
-					}
 				}
 			}
 		}
@@ -100,12 +96,10 @@ class AudioManager
 
 			if (currentContext != null)
 			{
-				if (Application.current != null && ALC.isExtensionPresent(device, 'ALC_EXT_disconnect'))
+				if (Application.current != null && ALC.isExtensionPresent(device, 'ALC_SOFT_reopen_device'))
 				{
 					if (Application.current.onUpdate.has(checkDevice))
-					{
 						Application.current.onUpdate.remove(checkDevice);
-					}
 				}
 
 				alc.makeContextCurrent(null);
@@ -133,12 +127,10 @@ class AudioManager
 
 			if (currentContext != null)
 			{
-				if (Application.current != null && ALC.isExtensionPresent(device, 'ALC_EXT_disconnect'))
+				if (Application.current != null && ALC.isExtensionPresent(device, 'ALC_SOFT_reopen_device'))
 				{
 					if (Application.current.onUpdate.has(checkDevice))
-					{
 						Application.current.onUpdate.remove(checkDevice);
-					}
 				}
 
 				alc.suspendContext(currentContext);
@@ -157,17 +149,19 @@ class AudioManager
 		var alc = context.openal;
 		var currentContext = alc.getCurrentContext();
 		var alDevice = alc.getContextsDevice(currentContext);
-
 		var curDeviceName = ALC.getString(null, ALC.ALL_DEVICES_SPECIFIER);
-    if (curDeviceName != null && curDeviceName != alDeviceName)
-    {
-    	trace('[OPENAL] Lost audio device "$alDeviceName", reopening...');
-      if (ALC.reOpenDevice(alDevice, null, null))
-      {
-      	alDeviceName = curDeviceName;
-      	trace('[OPENAL] Audio device reopened on "$alDeviceName"!');
-      }
-    }
+
+		if (curDeviceName != null && curDeviceName != alDeviceName)
+		{
+			trace('[OPENAL] Lost audio device "$alDeviceName", reopening...');
+
+			if (ALC.reOpenDevice(alDevice, null, null))
+			{
+				alDeviceName = curDeviceName;
+
+				trace('[OPENAL] Audio device reopened on "$alDeviceName"!');
+			}
+		}
 	}
 
 	@:noCompletion
