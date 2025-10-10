@@ -234,6 +234,15 @@ class AL
 	public static inline var FILTER_HIGHPASS:Int = 0x0002;
 	public static inline var FILTER_BANDPASS:Int = 0x0003;
 
+	public static inline var STOP_SOURCES_ON_DISCONNECT_SOFT:Int = 0x19AB;
+
+	public static inline var DEVICE_CLOCK_SOFT:Int = 0x1600;
+	public static inline var DEVICE_LATENCY_SOFT:Int = 0x1601;
+	public static inline var DEVICE_CLOCK_LATENCY_SOFT:Int = 0x1602;
+
+	public static inline var SEC_OFFSET_LATENCY_SOFT:Int = 0x1201;
+	public static inline var SEC_OFFSET_CLOCK_SOFT:Int = 0x1203;
+
 	public static function removeDirectFilter(source:ALSource)
 	{
 		#if (lime_cffi && lime_openal && !macro)
