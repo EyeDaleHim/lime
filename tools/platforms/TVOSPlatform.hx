@@ -390,7 +390,6 @@ class TVOSPlatform extends PlatformTarget
 		if (arm64) commands.push([
 			"-Dtvos",
 			"-Dappletvos",
-			"-DHXCPP_CPP11",
 			"-DHXCPP_ARM64",
 			"-DOBJC_ARC",
 			"-DENABLE_BITCODE"
@@ -399,7 +398,6 @@ class TVOSPlatform extends PlatformTarget
 			"-Dtvos",
 			"-Dappletvsim",
 			"-Dsimulator",
-			"-DHXCPP_CPP11",
 			"-DOBJC_ARC",
 			"-DENABLE_BITCODE"
 		]);
@@ -408,7 +406,6 @@ class TVOSPlatform extends PlatformTarget
 			"-Dappletvsim",
 			"-Dsimulator",
 			"-DHXCPP_M64",
-			"-DHXCPP_CPP11",
 			"-DOBJC_ARC",
 			"-DENABLE_BITCODE"
 		]);
