@@ -1,9 +1,7 @@
 <xml>
-	<set name="HXCPP_CPP20" value="1" />
+	<!-- <set name="HXCPP_CPP20" value="1" /> -->
 
 	<include name="${HXCPP}/build-tool/BuildCommon.xml" />
-
-	<set name="common-flags" value="${common-flags} /std:c++17" />
 
 	<set name="HXCPP_ANDROID_PLATFORM" value="28" if="android" />
 	<set name="PLATFORM_NUMBER" value="28" if="android" />
@@ -61,6 +59,9 @@
 	<files id="lime">
 
 		<compilerflag value="-Iinclude" />
+
+		<compilerflag value="-std=c++17" unless="windows" />
+        <compilerflag value="/std:c++17" if="windows" />
 
 		<file name="src/ExternalInterface.cpp" />
 
@@ -187,6 +188,8 @@
 		</section>
 
 		<section if="LIME_OPENAL">
+
+			<compilerflag value="/std:c++17" if="windows" />
 
 			<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/openal/include/" unless="LIME_MOJOAL || emscripten" />
 			<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/mojoal/" if="LIME_MOJOAL" />
