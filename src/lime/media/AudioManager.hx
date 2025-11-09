@@ -36,12 +36,19 @@ class AudioManager
 			if (context == null)
 			{
 				AudioManager.context = new AudioContext();
+
 				context = AudioManager.context;
 
 				#if !lime_doc_gen
 				if (context.type == OPENAL)
 				{
+					#if (windows || mac || linux || android)
+					setupConfig();
+					#end
+
 					var alc = context.openal;
+					var device = alc.openDevice();
+					var ctx = alc.createContext(device);
 
 					alc.makeContextCurrent(ctx);
 					alc.processContext(ctx);
