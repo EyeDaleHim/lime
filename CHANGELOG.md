@@ -1,6 +1,11 @@
 Changelog
 =========
 
+EyeDaleHim Fork (last updated 11/09/2025)
+------------------
+
+* Cherry-picks [#1832](https://github.com/openfl/lime/pull/1832) from `openfl/lime` and [#28](https://github.com/FunkinCrew/lime/pull/28) from `FunkinCrew/lime`.
+
 8.2.3 (10/01/2025)
 ------------------
 
