@@ -220,6 +220,8 @@ class HTML5Window
 
 			element.addEventListener("contextmenu", handleContextMenuEvent, true);
 
+			element.addEventListener("dragenter", handleDragEvent, true);
+			element.addEventListener("dragleave", handleDragEvent, true);
 			element.addEventListener("dragstart", handleDragEvent, true);
 			element.addEventListener("dragover", handleDragEvent, true);
 			element.addEventListener("drop", handleDragEvent, true);
@@ -242,12 +244,15 @@ class HTML5Window
 		}
 	}
 
-	public function alert(message:String, title:String):Void
+	public function alert(type:lime.ui.MessageBoxType, message:String, title:String, buttons:Array<String>):Int
 	{
 		if (message != null)
 		{
 			Browser.alert(message);
+			return 0;
 		}
+
+		return -1;
 	}
 
 	public function close():Void
@@ -385,6 +390,11 @@ class HTML5Window
 
 	public function focus():Void {}
 
+	public function setVSyncMode(mode:lime.ui.WindowVSyncMode):Bool
+	{
+		return false;
+	}
+
 	private function focusTextInput():Void
 	{
 		// Avoid changing focus multiple times per frame.
@@ -406,6 +416,11 @@ class HTML5Window
 	public function getDisplay():Display
 	{
 		return System.getDisplay(0);
+	}
+
+	public function getNativeHandle():Dynamic
+	{
+		return 0;
 	}
 
 	public function getDisplayMode():DisplayMode
@@ -492,32 +507,50 @@ class HTML5Window
 		if (event.cancelable) event.preventDefault();
 	}
 
-	private function handleDragEvent(event:DragEvent):Bool
+	private function handleDragEvent(event:DragEvent):Void
 	{
-		switch (event.type)
+		if (event.cancelable)
 		{
-			case "dragstart":
-				if (cast(event.target, Element).nodeName.toLowerCase() == "img" && event.cancelable)
-				{
-					event.preventDefault();
-					return false;
-				}
-
-			case "dragover":
-				event.preventDefault();
-				return false;
-
-			case "drop":
-				// TODO: Create a formal API that supports HTML5 file objects
-				if (event.dataTransfer != null && event.dataTransfer.files.length > 0)
-				{
-					parent.onDropFile.dispatch(cast event.dataTransfer.files);
-					event.preventDefault();
-					return false;
-				}
+			event.preventDefault();
 		}
 
-		return true;
+		switch (event.type)
+		{
+			case "dragenter":
+				parent.onDropBegin.dispatch();
+			case "dragleave":
+				parent.onDropComplete.dispatch(event.clientX, event.clientY);
+			case "dragover":
+				parent.onDropPosition.dispatch(event.clientX, event.clientY);
+			case "drop":
+				if (event.dataTransfer != null)
+				{
+					// TODO: Create a formal API that supports HTML5 file objects
+					if (event.dataTransfer.files != null && event.dataTransfer.files.length > 0)
+					{
+						for (file in event.dataTransfer.files)
+						{
+							parent.onDropFile.dispatch(cast file, "html5", event.clientX, event.clientY);
+						}
+					}
+					else
+					{
+						var text = event.dataTransfer.getData("text/plain");
+
+						if (text == null || text == "")
+						{
+							text = event.dataTransfer.getData("text/uri-list");
+						}
+
+						if (text != null && text != "")
+						{
+							parent.onDropText.dispatch(text, "html5", event.clientX, event.clientY);
+						}
+					}
+				}
+
+				parent.onDropComplete.dispatch(event.clientX, event.clientY);
+		}
 	}
 
 	private function handleFocusEvent(event:FocusEvent):Void

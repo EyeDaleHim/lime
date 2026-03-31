@@ -233,6 +233,19 @@ class System
 	#end
 
 	/**
+		Returns the display orientation for the specified display.
+	**/
+	public static function getDisplayOrientation(display:Display):DisplayOrientation
+	{
+		#if (lime_cffi && !macro)
+		if (display != null)
+			return NativeCFFI.lime_system_get_display_orientation(display.id);
+		#end
+
+		return DISPLAY_ORIENTATION_UNKNOWN;
+	}
+
+	/**
 		Returns information about the video display with the specified ID.
 	**/
 	public static function getDisplay(id:Int):Display
@@ -246,42 +259,7 @@ class System
 			display.id = id;
 			display.name = CFFI.stringValue(displayInfo.name);
 			display.bounds = new Rectangle(displayInfo.bounds.x, displayInfo.bounds.y, displayInfo.bounds.width, displayInfo.bounds.height);
-			display.orientation = displayInfo.orientation;
-
-			#if android
-			var getDisplaySafeArea = JNI.createStaticMethod("org/haxe/lime/GameActivity", "getDisplaySafeAreaInsets", "()[I");
-			var result = getDisplaySafeArea();
-			display.safeArea = new Rectangle(
-				display.bounds.x + result[0],
-				display.bounds.y + result[1],
-				display.bounds.width - result[0] - result[2],
-				display.bounds.height - result[1] - result[3]);
-			#else
-			display.safeArea = new Rectangle(
-				displayInfo.safeArea.x,
-				displayInfo.safeArea.y,
-				displayInfo.safeArea.width,
-				displayInfo.safeArea.height);
-			#end
-
-			#if ios
-			var tablet = NativeCFFI.lime_system_get_ios_tablet();
-			var scale = Application.current.window.scale;
-			if (!tablet && scale > 2.46)
-			{
-				display.dpi = 401; // workaround for iPhone Plus
-			}
-			else
-			{
-				display.dpi = (tablet ? 132 : 163) * scale;
-			}
-			#elseif android
-			var getDisplayDPI = JNI.createStaticMethod("org/haxe/lime/GameActivity", "getDisplayXDPI", "()D");
-			display.dpi = Math.round(getDisplayDPI());
-			#else
 			display.dpi = displayInfo.dpi;
-			#end
-
 			display.supportedModes = [];
 
 			var displayMode;
@@ -326,23 +304,6 @@ class System
 			#if flash
 			display.dpi = Capabilities.screenDPI;
 			display.currentMode = new DisplayMode(Std.int(Capabilities.screenResolutionX), Std.int(Capabilities.screenResolutionY), 60, ARGB32);
-			#if air
-			switch (flash.Lib.current.stage.orientation) {
-				case DEFAULT:
-					display.orientation = PORTRAIT;
-				case UPSIDE_DOWN:
-					display.orientation = PORTRAIT_FLIPPED;
-				case ROTATED_LEFT:
-					display.orientation = LANDSCAPE_FLIPPED;
-				case ROTATED_RIGHT:
-					display.orientation = LANDSCAPE;
-				default:
-					display.orientation = UNKNOWN;
-			}
-
-			#else
-			display.orientation = UNKNOWN;
-			#end
 			#elseif (js && html5)
 			// var div = Browser.document.createElement ("div");
 			// div.style.width = "1in";
@@ -352,31 +313,10 @@ class System
 			// display.dpi = Std.parseFloat (ppi);
 			display.dpi = 96 * Browser.window.devicePixelRatio;
 			display.currentMode = new DisplayMode(Browser.window.screen.width, Browser.window.screen.height, 60, ARGB32);
-			if (Browser.window.screen.orientation != null)
-			{
-				switch (Browser.window.screen.orientation.type)
-				{
-					case PORTRAIT_PRIMARY:
-						display.orientation = PORTRAIT;
-					case PORTRAIT_SECONDARY:
-						display.orientation = PORTRAIT_FLIPPED;
-					case LANDSCAPE_PRIMARY:
-						display.orientation = LANDSCAPE;
-					case LANDSCAPE_SECONDARY:
-						display.orientation = LANDSCAPE_FLIPPED;
-					default:
-						display.orientation = UNKNOWN;
-				}
-			}
-			else
-			{
-				display.orientation = UNKNOWN;
-			}
 			#end
 
 			display.supportedModes = [display.currentMode];
 			display.bounds = new Rectangle(0, 0, display.currentMode.width, display.currentMode.height);
-			display.safeArea = new Rectangle(0, 0, display.currentMode.width, display.currentMode.height);
 			return display;
 		}
 		#end
@@ -387,18 +327,18 @@ class System
 	/**
 		The number of milliseconds since the application was initialized.
 	**/
-	public static function getTimer():Int
+	public static function getTimer():#if flash Int #else Float #end
 	{
 		#if flash
 		return flash.Lib.getTimer();
 		#elseif ((js && !nodejs) || electron)
-		return Std.int(Browser.window.performance.now());
-		#elseif (lime_cffi && !macro)
-		return cast NativeCFFI.lime_system_get_timer();
+		return Browser.window.performance.now();
+		#elseif (lime_cffi && !macro && !neko)
+		return NativeCFFI.lime_system_get_timer() / 1e+6;
 		#elseif cpp
-		return Std.int(untyped __global__.__time_stamp() * 1000);
+		return untyped __global__.__time_stamp() * 1000;
 		#elseif sys
-		return Std.int(Sys.time() * 1000);
+		return Sys.time() * 1000;
 		#else
 		return 0;
 		#end
@@ -416,7 +356,7 @@ class System
 	#end
 
 	/**
-		Opens a file with the system default application.
+		Opens a file with the suste, default application.
 
 		In a web browser, opens a URL with target `_blank`.
 	**/
@@ -434,9 +374,6 @@ class System
 			Browser.window.open(path, "_blank");
 			#elseif flash
 			Lib.getURL(new URLRequest(path), "_blank");
-			#elseif android
-			var openFile = JNI.createStaticMethod("org/haxe/lime/GameActivity", "openFile", "(Ljava/lang/String;)V");
-			openFile(path);
 			#elseif (lime_cffi && !macro)
 			NativeCFFI.lime_system_open_file(path);
 			#end
@@ -456,11 +393,30 @@ class System
 			Browser.window.open(url, target);
 			#elseif flash
 			Lib.getURL(new URLRequest(url), target);
-			#elseif android
-			var openURL = JNI.createStaticMethod("org/haxe/lime/GameActivity", "openURL", "(Ljava/lang/String;Ljava/lang/String;)V");
-			openURL(url, target);
 			#elseif (lime_cffi && !macro)
 			NativeCFFI.lime_system_open_url(url, target);
+			#end
+		}
+	}
+
+	public static function getHint(key:String):String
+	{
+		if (key != null)
+		{
+			#if (lime_cffi && !macro)
+			return CFFI.stringValue(NativeCFFI.lime_system_get_hint(key));
+			#end
+		}
+
+		return null;
+	}
+
+	public static function setHint(key:String, value:String):Void
+	{
+		if (key != null && value != null)
+		{
+			#if (lime_cffi && !macro)
+			return NativeCFFI.lime_system_set_hint(key, value);
 			#end
 		}
 	}
@@ -599,6 +555,8 @@ class System
 							attributes.context.antialiasing = Std.parseInt(argValue);
 						case "background":
 							attributes.context.background = (argValue == "" || argValue == "null") ? null : Std.parseInt(argValue);
+						case "transparent":
+							attributes.transparent = __parseBool(argValue);
 						case "borderless":
 							attributes.borderless = __parseBool(argValue);
 						case "colorDepth":
@@ -922,6 +880,15 @@ class System
 
 		return __userDirectory;
 	}
+}
+
+#if (haxe_ver >= 4.0) enum #else @:enum #end abstract DisplayOrientation(Int) from Int to Int from UInt to UInt
+{
+	var DISPLAY_ORIENTATION_UNKNOWN = 0;
+	var DISPLAY_ORIENTATION_LANDSCAPE = 1;
+	var DISPLAY_ORIENTATION_LANDSCAPE_FLIPPED = 2;
+	var DISPLAY_ORIENTATION_PORTRAIT = 3;
+	var DISPLAY_ORIENTATION_PORTRAIT_FLIPPED = 4;
 }
 
 #if (haxe_ver >= 4.0) private enum #else @:enum private #end abstract SystemDirectory(Int) from Int to Int from UInt to UInt

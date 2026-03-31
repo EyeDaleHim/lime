@@ -37,6 +37,7 @@ class Window
 	#if (!lime_doc_gen || (js && html5))
 	public var element(default, null):#if (js && html5) Element #else Dynamic #end;
 	#end
+	public var nativeHandle(get, null):Dynamic;
 
 	/**
 	 * The current frame rate (measured in frames-per-second) of the window.
@@ -60,75 +61,38 @@ class Window
 	public var onActivate(default, null) = new Event<Void->Void>();
 	public var onClose(default, null) = new Event<Void->Void>();
 	public var onDeactivate(default, null) = new Event<Void->Void>();
-	public var onDropFile(default, null) = new Event<String->Void>();
+	public var onDropFile(default, null) = new Event<String->String->Float->Float->Void>();
+	public var onDropText(default, null) = new Event<String->String->Float->Float->Void>();
+	public var onDropBegin(default, null) = new Event<Void->Void>();
+	public var onDropComplete(default, null) = new Event<Float->Float->Void>();
+	public var onDropPosition(default, null) = new Event<Float->Float->Void>();
 	public var onEnter(default, null) = new Event<Void->Void>();
 	public var onExpose(default, null) = new Event<Void->Void>();
 	public var onFocusIn(default, null) = new Event<Void->Void>();
 	public var onFocusOut(default, null) = new Event<Void->Void>();
 	public var onFullscreen(default, null) = new Event<Void->Void>();
 	public var onHide(default, null) = new Event<Void->Void>();
-
-	/**
-		Fired when the user presses a key down when this window has focus.
-	**/
 	public var onKeyDown(default, null) = new Event<KeyCode->KeyModifier->Void>();
-
-	/**
-		Fired when the user releases a key that was down.
-	**/
 	public var onKeyUp(default, null) = new Event<KeyCode->KeyModifier->Void>();
-
+	public var onKeyDownPrecise(default, null) = new Event<KeyCode->KeyModifier->haxe.Int64->Void>();
+	public var onKeyUpPrecise(default, null) = new Event<KeyCode->KeyModifier->haxe.Int64->Void>();
 	public var onLeave(default, null) = new Event<Void->Void>();
-
-	/**
-		Fired when the window is maximized.
-	**/
 	public var onMaximize(default, null) = new Event<Void->Void>();
-
-	/**
-		Fired when the window is minimized.
-	**/
 	public var onMinimize(default, null) = new Event<Void->Void>();
-
-	/**
-		Fired when the user pressed a mouse button down.
-	**/
 	public var onMouseDown(default, null) = new Event<Float->Float->MouseButton->Void>();
-
-	/**
-		Fired when the mouse is moved over the window.
-	**/
 	public var onMouseMove(default, null) = new Event<Float->Float->Void>();
 	public var onMouseMoveRelative(default, null) = new Event<Float->Float->Void>();
-
-	/**
-		Fired when the user releases a mouse button that was pressed down.
-	**/
 	public var onMouseUp(default, null) = new Event<Float->Float->Int->Void>();
-
-	/**
-		Fired when the user interacts with the mouse wheel.
-	**/
 	public var onMouseWheel(default, null) = new Event<Float->Float->MouseWheelMode->Void>();
-
-	/**
-		Fired when the window is moved to a new position.
-	**/
 	public var onMove(default, null) = new Event<Float->Float->Void>();
 	public var onRender(default, null) = new Event<RenderContext->Void>();
 	public var onRenderContextLost(default, null) = new Event<Void->Void>();
 	public var onRenderContextRestored(default, null) = new Event<RenderContext->Void>();
-
-	/**
-		Fired when the window is resized with new dimensions.
-	**/
 	public var onResize(default, null) = new Event<Int->Int->Void>();
-
 	public var onRestore(default, null) = new Event<Void->Void>();
 	public var onShow(default, null) = new Event<Void->Void>();
 	public var onTextEdit(default, null) = new Event<String->Int->Int->Void>();
 	public var onTextInput(default, null) = new Event<String->Void>();
-
 	public var opacity(get, set):Float;
 	public var parameters:Dynamic;
 	public var resizable(get, set):Bool;
@@ -159,6 +123,7 @@ class Window
 	@:noCompletion private var __resizable:Bool;
 	@:noCompletion private var __scale:Float;
 	@:noCompletion private var __title:String;
+	@:noCompletion private var __visible:Bool;
 	@:noCompletion private var __width:Int;
 	@:noCompletion private var __x:Int;
 	@:noCompletion private var __y:Int;
@@ -213,12 +178,6 @@ class Window
 		__x = 0;
 		__y = 0;
 		__title = Reflect.hasField(__attributes, "title") ? __attributes.title : "";
-		__hidden = false;
-		__borderless = Reflect.hasField(__attributes, "borderless") ? __attributes.borderless : false;
-		__resizable = Reflect.hasField(__attributes, "resizable") ? __attributes.resizable : false;
-		__maximized = Reflect.hasField(__attributes, "maximized") ? __attributes.maximized : false;
-		__minimized = Reflect.hasField(__attributes, "minimized") ? __attributes.minimized : false;
-
 		id = -1;
 
 		__backend = new WindowBackend(this);
@@ -428,9 +387,9 @@ class Window
 		#end
 	}
 
-	public function alert(message:String = null, title:String = null):Void
+	public function alert(?type:MessageBoxType = INFORMATION, message:String = null, title:String = null, buttons:Array<String> = null):Int
 	{
-		__backend.alert(message, title);
+		return __backend.alert(type, message, title, buttons);
 	}
 
 	public function close():Void
@@ -441,6 +400,15 @@ class Window
 	public function focus():Void
 	{
 		__backend.focus();
+	}
+
+	/**
+	 * Sets the swap interval for the current window.
+	 * @return `false` if the swap interval could not be set
+	**/
+	public function setVSyncMode(mode:lime.ui.WindowVSyncMode):Bool
+	{
+		return __backend.setVSyncMode(mode);
 	}
 
 	public function move(x:Int, y:Int):Void
@@ -547,6 +515,11 @@ class Window
 	@:noCompletion private function set_displayMode(value:DisplayMode):DisplayMode
 	{
 		return __backend.setDisplayMode(value);
+	}
+
+	@:noCompletion private function get_nativeHandle():Dynamic
+	{
+		return __backend.getNativeHandle();
 	}
 
 	@:noCompletion private inline function get_borderless():Bool
@@ -726,13 +699,13 @@ class Window
 
 	@:noCompletion private inline function get_visible():Bool
 	{
-		return !__hidden;
+		return __visible;
 	}
 
 	@:noCompletion private function set_visible(value:Bool):Bool
 	{
-		__hidden = !__backend.setVisible(value);
-		return !__hidden;
+		__visible = __backend.setVisible(value);
+		return __visible;
 	}
 
 	@:noCompletion private inline function get_width():Int

@@ -78,6 +78,7 @@ class WindowsPlatform extends PlatformTarget
 				hardware: true,
 				display: 0,
 				resizable: true,
+				transparent: false,
 				borderless: false,
 				orientation: Orientation.AUTO,
 				vsync: false,
@@ -589,6 +590,8 @@ class WindowsPlatform extends PlatformTarget
 
 					if (noOutput) return;
 
+					IconHelper.createWindowsIcon(icons, Path.combine(targetDirectory + "/obj", "ApplicationMain.ico"));
+
 					CPPHelper.compile(project, targetDirectory + "/obj", flags);
 
 					System.copyFile(targetDirectory + "/obj/ApplicationMain" + (project.debug ? "-debug" : "") + ".exe", executablePath);
@@ -617,18 +620,13 @@ class WindowsPlatform extends PlatformTarget
 
 					if (noOutput) return;
 
+					IconHelper.createWindowsIcon(icons, Path.combine(targetDirectory + "/obj", "ApplicationMain.ico"));
+
 					CPPHelper.compile(project, targetDirectory + "/obj", flags.concat(["-Dstatic_link"]));
+
 					CPPHelper.compile(project, targetDirectory + "/obj", flags, "BuildMain.xml");
 
 					System.copyFile(targetDirectory + "/obj/Main" + (project.debug ? "-debug" : "") + ".exe", executablePath);
-				}
-
-				var iconPath = Path.combine(applicationDirectory, "icon.ico");
-
-				if (IconHelper.createWindowsIcon(icons, iconPath) && System.hostPlatform == WINDOWS)
-				{
-					var templates = [Haxelib.getPath(new Haxelib(#if lime "lime" #else "hxp" #end)) + "/templates"].concat(project.templatePaths);
-					System.runCommand("", System.findTemplate(templates, "bin/ReplaceVistaIcon.exe"), [executablePath, iconPath, "1"], true, true);
 				}
 			}
 		}

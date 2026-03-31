@@ -2,7 +2,7 @@
 #define LIME_SDL_WINDOW_H
 
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <graphics/ImageBuffer.h>
 #include <ui/Cursor.h>
 #include <ui/Window.h>
@@ -18,13 +18,15 @@ namespace lime {
 			SDLWindow (Application* application, int width, int height, int flags, const char* title);
 			~SDLWindow ();
 
-			virtual void Alert (const char* message, const char* title);
+			virtual int Alert (int type, const char* message, const char* title, const char** buttons, int count);
+			virtual bool SetVSyncMode (int mode);
 			virtual void Close ();
 			virtual void ContextFlip ();
 			virtual void* ContextLock (bool useCFFIValue);
 			virtual void ContextMakeCurrent ();
 			virtual void ContextUnlock ();
 			virtual void Focus ();
+			virtual void* GetHandle ();
 			virtual void* GetContext ();
 			virtual const char* GetContextType ();
 			// virtual Cursor GetCursor ();

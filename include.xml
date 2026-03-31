@@ -6,6 +6,7 @@
 	<log error="Lime ${lime} requires Haxe 4 to target HashLink (version ${haxe} found)" if="hl ${${haxe} < 4.0}" />
 
 	<set name="lime" />
+	<define name="lime-funkin" />
 
 	<define name="native" if="cpp || neko || nodejs || cs || java || hl" />
 	<define name="howlerjs" if="html5" />
@@ -15,6 +16,7 @@
 	<define name="lime-cffi" if="native" />
 	<define name="lime-curl" unless="lime-console || lime-switch || emscripten || flash || html5" />
 	<define name="lime-dom" if="html5" />
+	<define name="lime-drlibs" if="native" />
 	<define name="lime-harfbuzz" if="native" />
 	<define name="lime-howlerjs" if="html5" />
 	<define name="lime-html5" if="html5" />
@@ -24,6 +26,7 @@
 	<define name="lime-openal" if="ios || tvos || emscripten || lime-openalsoft || lime-mojoal" />
 	<define name="lime-opengl" if="desktop" unless="html5" />
 	<define name="lime-opengles" if="emscripten || mobile" />
+	<define name="lime-opus" if="native" />
 	<define name="lime-vorbis" if="native" />
 	<define name="lime-webgl" if="html5" />
 
@@ -95,19 +98,46 @@
 
 		<dependency name="extension-api" path="dependencies/extension-api" if="android" />
 
-		<dependency path="dependencies/howler.min.js" if="html5 howlerjs" embed="true" />
+		<dependency path="dependencies/howler.js" if="html5 howlerjs" embed="true" />
 		<dependency path="dependencies/pako.min.js" if="html5" embed="true" allow-web-workers="true" />
 		<dependency path="dependencies/lzma_worker-min.js" if="html5" embed="true" />
 		<dependency path="dependencies/FileSaver.min.js" if="html5" embed="true" />
 		<dependency path="dependencies/webgl-debug.js" if="html5 webgl-debug" embed="true" />
 		<dependency path="dependencies/stats.min.js" if="html5 stats" embed="true" />
 
-		<dependency path="dependencies/angle/d3dcompiler_47.dll" if="windows angle" unless="static_link" />
-		<dependency path="dependencies/angle/libegl.dll" if="windows angle" unless="static_link" />
-		<dependency path="dependencies/angle/libglesv2.dll" if="windows angle" unless="static_link" />
+		<section if="ios">
+			<dependency name="AudioToolbox.framework" />
+			<dependency name="AVFoundation.framework" />
+			<dependency name="CoreAudio.framework" />
+			<dependency name="CoreBluetooth.framework" />
+			<dependency name="CoreGraphics.framework" />
+			<dependency name="CoreHaptics.framework" />
+			<dependency name="CoreMedia.framework" />
+			<dependency name="CoreMotion.framework" />
+			<dependency name="CoreText.framework" />
+			<dependency name="CoreVideo.framework" />
+			<dependency name="Foundation.framework" />
+			<dependency name="GameController.framework" />
+			<dependency name="MediaPlayer.framework" />
+			<dependency name="Metal.framework" />
+			<dependency name="OpenGLES.framework" />
+			<dependency name="QuartzCore.framework" />
+			<dependency name="UIKit.framework" />
+		</section>
 
-		<!-- TODO: Move to template or move all template dependencies to XML? -->
-		<!-- <dependency name="CoreBluetooth.framework" if="ios" /> -->
+		<section if="tvos">
+			<dependency name="AudioToolbox.framework" />
+			<dependency name="AVFoundation.framework" />
+			<dependency name="CoreAudio.framework" />
+			<dependency name="CoreBluetooth.framework" />
+			<dependency name="CoreGraphics.framework" />
+			<dependency name="Foundation.framework" />
+			<dependency name="GameController.framework" />
+			<dependency name="MediaPlayer.framework" />
+			<dependency name="OpenGLES.framework" />
+			<dependency name="QuartzCore.framework" />
+			<dependency name="UIKit.framework" />
+		</section>
 
 		<define name="native-trace" if="flash" unless="haxe-trace || haxetrace" />
 		<define name="fdb" if="flash debug" unless="nofdb" />
@@ -115,7 +145,19 @@
 		<define name="MACOSX_DEPLOYMENT_TARGET" value="10.9" if="mac" unless="MACOSX_DEPLOYMENT_TARGET" />
 		<setenv name="MACOSX_DEPLOYMENT_TARGET" value="${MACOSX_DEPLOYMENT_TARGET}" if="mac" />
 
-		<architecture name="armv7" if="android" />
+		<section if="android">
+			<architecture name="armv7" />
+
+			<config:android>
+				<manifest>
+					<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+					<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+					<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+					<uses-permission android:name="android.permission.INTERNET" />
+					<uses-permission android:name="android.permission.VIBRATE" />
+				</manifest>
+			</config:android>
+		</section>
 
 		<section if="emscripten">
 
